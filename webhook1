@@ -68,13 +68,6 @@ return function(HttpService, WebhookURL, userID)
         sendMessage(fruitData, customContent)
     end
 
-    local function monitorStoredFruits()
-        -- Check for changes every hour (3600 seconds)
-        while true do
-            collectFruits()
-            wait(3600) -- Wait for 1 hour
-        end
-    end
-
-    monitorStoredFruits()
+    -- Collect fruits and send the webhook notification once
+    collectFruits()
 end
