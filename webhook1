@@ -1,86 +1,80 @@
-local HttpService = game:GetService("HttpService")
-local WebhookURL = "https://discord.com/api/webhooks/1262329518585020510/Yi9rBY7FZG-UgDkkLUqbggq2F_X7evshUHBdV9sTRjqZT8bMURRDUqETfvIBJNTZAleL"
+-- webhook1.lua (the remote script)
 
-local function sendMessage(fruitData, customContent)
-    -- Format the fruits list as a code block with ordered entries
-    local fruitList = "```text\n"
-    for i = 1, 12 do
-        local dfName = "StoredDF" .. i
-        local fruitName = fruitData[dfName] or "None"
-        fruitList = fruitList .. dfName .. ": " .. fruitName .. "\n"
-    end
-    fruitList = fruitList .. "```"
-
-    local Data = {
-        embeds = {
-            {
-                title = "Fruits Stored!",
-                color = tonumber("0x7269da"),
-                description = fruitList,
-                footer = {
-                    text = "Fruits stored from StoredDF1 to StoredDF12"
-                }
-            }
-        },
-        content = customContent or ""  -- Add custom content here
-    }
-
-    local Headers = { ["Content-Type"] = "application/json" }
-    local Encoded = HttpService:JSONEncode(Data)
-
-    local Request = http_request or request or HttpPost or syn.request
-    local Final1 = {
-        Url = WebhookURL,
-        Body = Encoded,
-        Method = "POST",
-        Headers = Headers
-    }
-
-    Request(Final1)
-end
-
-local function collectFruits()
-    local fruitData = {}
-
-    -- Obtain the executor's user ID (LocalPlayer for testing in the studio)
-    local player = game.Players.LocalPlayer
-    local userID = player.UserId  -- Executor's user ID
-
-    -- Construct the path dynamically based on the user's ID
-    local userData = workspace:FindFirstChild("UserData"):FindFirstChild("User_" .. userID):FindFirstChild("Data")
-
-    if userData then
+return function(HttpService, WebhookURL, userID)
+    local function sendMessage(fruitData, customContent)
+        -- Format the fruits list as a code block with ordered entries
+        local fruitList = "```text\n"
         for i = 1, 12 do
             local dfName = "StoredDF" .. i
-            local storedDF = userData:FindFirstChild(dfName)
-            if storedDF then
-                local fruitName = storedDF.Value
-                if fruitName and fruitName ~= "" then
-                    fruitData[dfName] = fruitName
+            local fruitName = fruitData[dfName] or "None"
+            fruitList = fruitList .. dfName .. ": " .. fruitName .. "\n"
+        end
+        fruitList = fruitList .. "```"
+
+        local Data = {
+            embeds = {
+                {
+                    title = "Fruits Stored!",
+                    color = tonumber("0x7269da"),
+                    description = fruitList,
+                    footer = {
+                        text = "Fruits stored from StoredDF1 to StoredDF12"
+                    }
+                }
+            },
+            content = customContent or ""  -- Add custom content here
+        }
+
+        local Headers = { ["Content-Type"] = "application/json" }
+        local Encoded = HttpService:JSONEncode(Data)
+
+        local Request = http_request or request or HttpPost or syn.request
+        local Final1 = {
+            Url = WebhookURL,
+            Body = Encoded,
+            Method = "POST",
+            Headers = Headers
+        }
+
+        Request(Final1)
+    end
+
+    local function collectFruits()
+        local fruitData = {}
+
+        -- Construct the path dynamically based on the user's ID
+        local userData = workspace:FindFirstChild("UserData"):FindFirstChild("User_" .. userID):FindFirstChild("Data")
+
+        if userData then
+            for i = 1, 12 do
+                local dfName = "StoredDF" .. i
+                local storedDF = userData:FindFirstChild(dfName)
+                if storedDF then
+                    local fruitName = storedDF.Value
+                    if fruitName and fruitName ~= "" then
+                        fruitData[dfName] = fruitName
+                    else
+                        fruitData[dfName] = "None"
+                    end
                 else
                     fruitData[dfName] = "None"
                 end
-            else
-                fruitData[dfName] = "None"
             end
+        else
+            print("User data not found for user ID: " .. userID)
         end
-    else
-        print("User data not found for user ID: " .. userID)
+
+        local customContent = "This is a custom message from the user."
+        sendMessage(fruitData, customContent)
     end
 
-    -- Example of custom content that users can add
-    local customContent = "This is a custom message from the user."
-
-    -- Send a notification with all collected fruits and custom content
-    sendMessage(fruitData, customContent)
-end
-
-local function monitorStoredFruits()
-    -- Check for changes every hour (3600 seconds)
-    while true do
-        collectFruits()
-        wait(3600) -- Wait for 1 hour
+    local function monitorStoredFruits()
+        -- Check for changes every hour (3600 seconds)
+        while true do
+            collectFruits()
+            wait(3600) -- Wait for 1 hour
+        end
     end
-end
 
-monitorStoredFruits()
+    monitorStoredFruits()
+end
