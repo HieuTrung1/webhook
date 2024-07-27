@@ -1,3 +1,5 @@
+local HttpService = game:GetService("HttpService")
+local WebhookURL = "https://discord.com/api/webhooks/1262329518585020510/Yi9rBY7FZG-UgDkkLUqbggq2F_X7evshUHBdV9sTRjqZT8bMURRDUqETfvIBJNTZAleL"
 
 local function sendMessage(fruitData, customContent)
     -- Format the fruits list as a code block with ordered entries
