@@ -1,0 +1,143 @@
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+local HttpService = game:GetService("HttpService")
+
+-- Initialize default values
+local webhookURL = ""
+local interval = 60 -- Interval in seconds for monitoring fruits
+
+-- Obtain the executor's user ID (LocalPlayer for testing in the studio)
+local player = game.Players.LocalPlayer
+local userID = player.UserId  -- Executor's user ID
+
+-- Function to send a message to the webhook
+local function sendMessage(fruitData)
+    -- Check if webhookURL is set
+    if webhookURL == "" then
+        print("Webhook URL is not set.")
+        return
+    end
+
+    -- Format the fruits list as a code block with ordered entries
+    local fruitList = "```text\n"
+    for i = 1, 12 do
+        local dfName = "StoredDF" .. i
+        local fruitName = fruitData[dfName] or "None"
+        fruitList = fruitList .. dfName .. ": " .. fruitName .. "\n"
+    end
+    fruitList = fruitList .. "```"
+
+    local Data = {
+        embeds = {
+            {
+                title = "Fruits Stored!",
+                color = tonumber("0x7269da"),
+                description = fruitList,
+                footer = {
+                    text = "Fruits stored from StoredDF1 to StoredDF12"
+                }
+            }
+        }
+    }
+
+    local Headers = { ["Content-Type"] = "application/json" }
+    local Encoded = HttpService:JSONEncode(Data)
+
+    local Request = http_request or request or HttpPost or syn.request
+    local Final1 = {
+        Url = webhookURL,
+        Body = Encoded,
+        Method = "POST",
+        Headers = Headers
+    }
+
+    Request(Final1)
+end
+
+-- Function to collect fruits
+local function collectFruits()
+    local fruitData = {}
+
+    -- Construct the path dynamically based on the user's ID
+    local userDataPath = "UserData.User_" .. userID .. ".Data"
+
+    local userData = workspace:FindFirstChild("UserData"):FindFirstChild("User_" .. userID):FindFirstChild("Data")
+
+    if userData then
+        for i = 1, 12 do
+            local dfName = "StoredDF" .. i
+            local storedDF = userData:FindFirstChild(dfName)
+            if storedDF then
+                local fruitName = storedDF.Value
+                if fruitName and fruitName ~= "" then
+                    fruitData[dfName] = fruitName
+                else
+                    fruitData[dfName] = "None"
+                end
+            else
+                fruitData[dfName] = "None"
+            end
+        end
+    else
+        print("User data not found for user ID: " .. userID)
+    end
+
+    return fruitData
+end
+
+-- Function to monitor and send stored fruits every interval
+local function monitorStoredFruits()
+    while true do
+        local fruitData = collectFruits()
+        sendMessage(fruitData)
+        wait(interval) -- Wait for the specified interval
+    end
+end
+
+-- Create Orion window and tab
+local Window = OrionLib:MakeWindow({
+    Name = "WebHook Saluna Buyer",
+    HidePremium = false,
+    SaveConfig = true,
+    ConfigFolder = "MyConfigFolder"
+})
+
+local Tab = Window:MakeTab({
+    Name = "My Tab",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+-- Textbox for webhook URL input
+Tab:AddTextbox({
+    Name = "Webhook URL",
+    Default = webhookURL,
+    TextDisappear = true,
+    Callback = function(Value)
+        webhookURL = Value
+        print("Webhook URL updated to: " .. webhookURL)
+        OrionLib:SaveConfig() -- Save the config whenever the URL is updated
+    end    
+})
+
+-- Input for interval in minutes
+Tab:AddTextbox({
+    Name = "Interval (minutes)",
+    Default = tostring(interval / 60),
+    TextDisappear = true,
+    Callback = function(Value)
+        interval = (tonumber(Value) or 1) * 60
+        print("Interval updated to: " .. (interval / 60) .. " minutes")
+        OrionLib:SaveConfig() -- Save the config whenever the interval is updated
+    end    
+})
+
+-- Button to start monitoring
+Tab:AddButton({
+    Name = "Start Monitoring",
+    Callback = function()
+        monitorStoredFruits()
+    end    
+})
+
+-- Initialize Orion Library
+OrionLib:Init()
